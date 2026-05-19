@@ -1,4 +1,4 @@
-name: Build PWA to Android APK (TWA)
+name: Build TWA APK
 
 on:
   push:
@@ -10,54 +10,51 @@ jobs:
 
     env:
       CI: true
-      BUBBLEWRAP_SKIP_JDK_DOWNLOAD: true
 
     steps:
       # 1. Checkout repo
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Setup Node.js
-      - name: Setup Node.js
+      # 2. Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 3. Setup Java (required for Android build tools)
+      # 3. Setup Java (prevents JDK prompt issue)
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 4. Install Bubblewrap CLI
+      # 4. Install Bubblewrap
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      # 5. Validate manifest exists (fail fast)
+      # 5. Verify manifest exists
       - name: Check manifest
         run: |
-          echo "Checking manifest.json..."
-          test -f manifest.json || (echo "manifest.json missing!" && exit 1)
+          test -f manifest.json || (echo "Missing manifest.json" && exit 1)
 
-      # 6. Initialize TWA project (NON-INTERACTIVE)
-      # IMPORTANT: Replace URL with your real hosted PWA URL
-      - name: Init TWA project
+      # 6. FORCE NON-INTERACTIVE INIT (KEY FIX)
+      - name: Init TWA (force non-interactive)
         run: |
-          bubblewrap init \
+          yes | bubblewrap init \
             --manifest https://joethondev.github.io/pdf-reader-pwa/manifest.json \
             --directory twa \
             --force
 
-      # 7. Build APK (non-interactive, skip validations)
+      # 7. Build APK (force yes again)
       - name: Build APK
         run: |
           cd twa
-          bubblewrap build --skipPwaValidation
+          yes | bubblewrap build --skipPwaValidation
 
-      # 8. Upload APK artifact
+      # 8. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
+          name: apk
           path: twa/app-release-signed.apk
