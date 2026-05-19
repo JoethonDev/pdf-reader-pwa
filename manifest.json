@@ -2,7 +2,7 @@
   "name": "معهد القديس ديديموس للمرتلين",
   "short_name": "ديديموس المحرق",
   "description": "الموقع الرسمي والمنهج الدراسي لمعهد القديس ديديموس للمرتلين بدير المحرق العامر",
-  "start_url": "/index.html",
+  "start_url": "/pdf-reader-pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
