@@ -1,4 +1,4 @@
-name: Build TWA APK
+name: Build PWA to Android APK (TWA)
 
 on:
   push:
@@ -8,18 +8,56 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    env:
+      CI: true
+      BUBBLEWRAP_SKIP_JDK_DOWNLOAD: true
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+    steps:
+      # 1. Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # 3. Setup Java (required for Android build tools)
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # 4. Install Bubblewrap CLI
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
+      # 5. Validate manifest exists (fail fast)
+      - name: Check manifest
+        run: |
+          echo "Checking manifest.json..."
+          test -f manifest.json || (echo "manifest.json missing!" && exit 1)
+
+      # 6. Initialize TWA project (NON-INTERACTIVE)
+      # IMPORTANT: Replace URL with your real hosted PWA URL
+      - name: Init TWA project
+        run: |
+          bubblewrap init \
+            --manifest https://joethondev.github.io/pdf-reader-pwa/manifest.json \
+            --directory twa \
+            --force
+
+      # 7. Build APK (non-interactive, skip validations)
       - name: Build APK
         run: |
-          bubblewrap build
+          cd twa
+          bubblewrap build --skipPwaValidation
+
+      # 8. Upload APK artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: twa/app-release-signed.apk
